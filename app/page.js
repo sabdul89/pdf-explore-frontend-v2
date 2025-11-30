@@ -1,3 +1,4 @@
+"use client"
 import dynamic from 'next/dynamic'
 import React, { useRef, useState, useEffect } from 'react'
 const PdfViewer = dynamic(() => import('../components/PdfViewer'), { ssr: false })
@@ -5,7 +6,7 @@ import RightPanel from '../components/RightPanel'
 import { convertToPdfPoints } from '../utils/coords'
 
 export default function Page() {
-  const [pdfUrl, setPdfUrl] = useState(null)
+  const [pdfUrl, setPdfUrl] = useState([])
   const [sections, setSections] = useState(() => { try { return JSON.parse(localStorage.getItem('docsy_sections')||'[]') } catch(e){return[]} })
   const [fields, setFields] = useState([])
   const viewerDimsRef = useRef({})
