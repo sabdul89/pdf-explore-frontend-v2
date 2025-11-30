@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import * as pdfjsLib from "pdfjs-dist/build/pdf";
-import "pdfjs-dist/build/pdf.worker.entry";
+import * as pdfjsLib from "pdfjs-dist/webpack";
 
 export default function PdfViewer({
   pdfData,
@@ -15,11 +14,11 @@ export default function PdfViewer({
   const containerRef = useRef(null);
   const [numPages, setNumPages] = useState(0);
 
-  // ------------------------------
+  // ---------------------------------------
   // Load PDF only when pdfData exists
-  // ------------------------------
+  // ---------------------------------------
   useEffect(() => {
-    if (!pdfData) return; // ⛔ Prevents Invalid parameter object error
+    if (!pdfData) return;
 
     const load = async () => {
       try {
@@ -46,9 +45,6 @@ export default function PdfViewer({
     load();
   }, [pdfData]);
 
-  // ------------------------------
-  // Multi-select (shift-click)
-  // ------------------------------
   const toggleSelect = (id, event) => {
     event.stopPropagation();
 
@@ -78,7 +74,6 @@ export default function PdfViewer({
             <div key={pageNum} className="relative mb-10">
               <canvas ref={(el) => (canvasRefs.current[pageNum] = el)} />
 
-              {/* Draw sections that belong to this page */}
               {sections
                 .filter((s) => s.page === pageNum)
                 .map((s) => (
@@ -94,7 +89,7 @@ export default function PdfViewer({
                       top: s.y,
                       left: s.x,
                       width: s.width,
-                      height: s.height,
+                      height: s.height
                     }}
                   />
                 ))}
