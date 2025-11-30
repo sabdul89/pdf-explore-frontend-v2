@@ -1,4 +1,4 @@
-"use client";
+"use client";   // <-- REQUIRED FIX
 
 import React, { useState } from "react";
 import PdfViewer from "../components/PdfViewer";
