@@ -6,6 +6,7 @@
 2. npm run dev
 3. Open http://localhost:3000
 
+
 This project uses Next.js App Router, TailwindCSS, react-pdf, and includes:
 - Section selection (draw boxes)
 - Drag / resize handles
