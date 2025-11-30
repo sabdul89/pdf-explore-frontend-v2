@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { pdfjs } from "react-pdf";
 
 // PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc =
+  `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 export default function PdfViewer({
   file,
@@ -21,7 +22,7 @@ export default function PdfViewer({
   const scale = 1.2;
 
   /* ----------------------------------------------------
-     🚫 Show placeholder when no PDF is selected
+     🚫 Placeholder if no PDF selected
      ---------------------------------------------------- */
   if (!file && !pdfUrl) {
     return (
@@ -53,7 +54,7 @@ export default function PdfViewer({
   }, [file, pdfUrl]);
 
   /* ----------------------------------------------------
-     🖼️ Render all pages
+     🖼️ Render all pages (scroll view)
      ---------------------------------------------------- */
   useEffect(() => {
     if (!pdf) return;
@@ -91,7 +92,7 @@ export default function PdfViewer({
   }, [pdf]);
 
   /* ----------------------------------------------------
-     ✏️ Section movement
+     ✏️ Update section
      ---------------------------------------------------- */
   const updateSection = (id, updates) => {
     setSections((prev) =>
@@ -99,12 +100,14 @@ export default function PdfViewer({
     );
   };
 
+  /* ----------------------------------------------------
+     ✏️ Drag section
+     ---------------------------------------------------- */
   const startDrag = (section, e) => {
     e.stopPropagation();
 
     const startX = e.clientX;
     const startY = e.clientY;
-
     const origX = section.x;
     const origY = section.y;
 
@@ -124,12 +127,14 @@ export default function PdfViewer({
     window.addEventListener("mouseup", onUp);
   };
 
+  /* ----------------------------------------------------
+     ↔️ Resize section
+     ---------------------------------------------------- */
   const startResize = (section, e) => {
     e.stopPropagation();
 
     const startX = e.clientX;
     const startY = e.clientY;
-
     const origW = section.width;
     const origH = section.height;
 
@@ -149,18 +154,23 @@ export default function PdfViewer({
     window.addEventListener("mouseup", onUp);
   };
 
+  /* ----------------------------------------------------
+     🖱️ Select section (multi-select with SHIFT)
+     ---------------------------------------------------- */
   const toggleSelect = (id, e) => {
     e.stopPropagation();
 
     if (e.shiftKey) {
-      setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      setSelectedIds((prev) =>
+        prev.includes(id) ? prev : [...prev, id]
+      );
     } else {
       setSelectedIds([id]);
     }
   };
 
   /* ----------------------------------------------------
-     📌 Render multi-page viewer
+     📌 Render viewer + all pages
      ---------------------------------------------------- */
   return (
     <div
@@ -174,11 +184,15 @@ export default function PdfViewer({
         </div>
       )}
 
+      {/* Render each page */}
       {pageCanvases.map((p) => (
-        <div key={p.pageNumber} className="relative mx-auto">
-          {/* PDF Page Canvas */}
+        <div
+          key={p.pageNumber}
+          className="relative mx-auto"
+          style={{ width: p.width }}
+        >
+          {/* Insert page canvas */}
           <div
-            dangerouslySetInnerHTML={{ __html: "" }}
             ref={(div) => {
               if (div && div.firstChild !== p.canvas) {
                 div.innerHTML = "";
@@ -187,10 +201,40 @@ export default function PdfViewer({
             }}
           />
 
-          {/* Sections overlay for THIS page only */}
+          {/* Sections for this page ONLY */}
           {sections
             .filter((s) => s.page === p.pageNumber)
             .map((s) => (
               <div
                 key={s.id}
-                onMou
+                onMouseDown={(e) => toggleSelect(s.id, e)}
+                className={`absolute border-2 ${
+                  selectedIds.includes(s.id)
+                    ? "border-blue-500 bg-blue-200/40"
+                    : "border-red-500 bg-red-200/30"
+                }`}
+                style={{
+                  left: s.x,
+                  top: s.y,
+                  width: s.width,
+                  height: s.height,
+                }}
+              >
+                {/* Drag handle */}
+                <div
+                  className="absolute inset-0 cursor-move"
+                  onMouseDown={(e) => startDrag(s, e)}
+                />
+
+                {/* Resize handle */}
+                <div
+                  className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-nwse-resize rounded"
+                  onMouseDown={(e) => startResize(s, e)}
+                />
+              </div>
+            ))}
+        </div>
+      ))}
+    </div>
+  );
+}
