@@ -1,59 +1,60 @@
-"use client"
-import dynamic from 'next/dynamic'
-import React, { useRef, useState, useEffect } from 'react'
-const PdfViewer = dynamic(() => import('../components/PdfViewer'), { ssr: false })
-import RightPanel from '../components/RightPanel'
-import { convertToPdfPoints } from '../utils/coords'
+"use client";
 
-export default function Page() {
-  const [pdfUrl, setPdfUrl] = useState([])
-  const [sections, setSections] = useState(() => { try { return JSON.parse(localStorage.getItem('docsy_sections')||'[]') } catch(e){return[]} })
-  const [fields, setFields] = useState([])
-  const viewerDimsRef = useRef({})
+import React, { useState } from "react";
+import PdfViewer from "../components/PdfViewer";
+import RightPanel from "../components/RightPanel";
 
-  useEffect(()=>{ localStorage.setItem('docsy_sections', JSON.stringify(sections)) },[sections])
+export default function HomePage() {
+  const [pdfData, setPdfData] = useState(null);
+  const [sections, setSections] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
 
-  const handleUpload = (file) => setPdfUrl(URL.createObjectURL(file))
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const runDetection = async () => {
-    if (!pdfUrl) return alert('Upload a PDF first')
-    const pdfRegions = sections.map(s => {
-      const dims = viewerDimsRef.current[s.page] || { renderedWidth: 800, renderedHeight: 1000, pageDims: { width: 612, height: 792 } }
-      const rendered = { width: dims.renderedWidth, height: dims.renderedHeight }
-      return convertToPdfPoints(s, dims.pageDims, rendered)
-    })
-
-    const res = await fetch('/api/detect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pdfRegions })
-    })
-    const body = await res.json()
-    setFields(body.fields)
-  }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      setPdfData(new Uint8Array(evt.target.result));
+    };
+    reader.readAsArrayBuffer(file);
+  };
 
   return (
-    <main className="min-h-screen p-6 grid grid-cols-12 gap-6">
-      <div className="col-span-8">
-        <PdfViewer
-          pdfUrl={pdfUrl}
-          onUpload={handleUpload}
-          sections={sections}
-          setSections={setSections}
-          fields={fields}
-          setFields={setFields}
-          viewerDimsRef={viewerDimsRef}
-        />
+    <div className="flex h-screen">
+      {/* LEFT: PDF Viewer */}
+      <div className="flex-1 flex flex-col bg-gray-50 overflow-auto">
+
+        {/* Upload Button */}
+        <div className="p-4 border-b bg-white flex items-center justify-center">
+          <label className="px-4 py-2 rounded-lg bg-blue-600 text-white cursor-pointer hover:bg-blue-700">
+            Upload PDF
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleUpload}
+            />
+          </label>
+        </div>
+
+        {/* PDF Viewer */}
+        <div className="flex-1 overflow-auto">
+          <PdfViewer
+            pdfData={pdfData}
+            sections={sections}
+            setSections={setSections}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+          />
+        </div>
       </div>
-      <div className="col-span-4">
-        <RightPanel
-          sections={sections}
-          setSections={setSections}
-          fields={fields}
-          setFields={setFields}
-          onDetect={runDetection}
-        />
-      </div>
-    </main>
-  )
+
+      {/* RIGHT: Panels */}
+      <RightPanel
+        sections={sections}
+        selectedIds={selectedIds}
+      />
+    </div>
+  );
 }
